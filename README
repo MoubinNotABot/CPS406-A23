@@ -1,1 +1,5 @@
 git repo for our assignment 
+Please write down the stories you are working on here:
+Moubin:
+    - Sort the members by their frequency of attendance in the club. Provide discount based on amount of practices attended.
+    - Sort the members by whether they have paid or not. Provide a discount or change based on amount of unpaid/paid classes
