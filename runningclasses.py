@@ -2,6 +2,7 @@ from hmac import new
 import pandas as pd 
 import PySimpleGUI as sg
 from  member import Member
+from IncomeStatement import IncomeStatement 
 import os 
 sg.theme('Dark Blue 3')  
 
@@ -11,7 +12,7 @@ sg.theme('Dark Blue 3')
 #check that list to see if the members have paid in advance for that month, or paid for that class as a one-time fee 
 #if not, add to a list of members who have not paid 
 
-member_path = '/Users/rachitasingh/Desktop/CPS 406 Software Engineering/allmembers.csv' 
+member_path = '/Users/rachitasingh/CPS406-A23'
 if os.path.isfile(member_path):
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 else:
@@ -19,13 +20,21 @@ else:
     member_data.to_csv('allmembers.csv')
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 
-
+def importdataframe(dataframe):
+    master_list = []
+    for row in range (0,dataframe.shape[0]):
+        newmember = Member(dataframe.iloc[row]['Type'], dataframe.iloc[row]['First Name'],dataframe.iloc[row]['Last Name'],dataframe.iloc[row]['Phone'],dataframe.iloc[row]['Address'],dataframe.iloc[row]['Username'],
+        dataframe.iloc[row]['Password'], dataframe.iloc[row]['self_paid'], dataframe.iloc[row]['self_attendance'], dataframe.iloc[row]['self_weekspaid'],dataframe.iloc[row]['self_penalty'],dataframe.iloc[row]['self_balance'])
+        master_list.append(newmember)
+    return master_list 
 
 
 def Login():
     global member_data
     member_usernames = list(member_data['Username']) 
     member_passwords = list(member_data['Password']) 
+    master_list = importdataframe(member_data)
+
     username_layout = [[sg.Text('Enter Username')],
           [sg.Input()],
           [sg.Button('Enter'),sg.Exit()]]
@@ -54,23 +63,17 @@ def Login():
             return None 
 
     ''' Need GUI here so that when members login, they can register for all classes running that month'''
-    memberlogin()
-    coachlogin()
-    treasurer()
+    for person in master_list:
+        if person.username == correct_username:
+            correct_type = person.type 
+    if correct_type.lower() == 'member':
+        memberlogin()
+    elif correct_type.lower() == 'coach':
+        coachlogin()
+    elif correct_type.lower() == 'treasurer':
+        treasurerlogin()
 
-    layout_member = [[sg.Text('Choose whether to sign up for a class or make a payment')],
-          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Exit()]]
-    member_window = sg.Window('Welcome', layout_member)
-    event, choice = member_window.read()
-    if event == "Make Payment":
-            payment_layout =   [[sg.Text("Enter Credit Card")],[sg.Input()], [sg.Text("Enter Security code")],[sg.Input()], [sg.Text("Enter Payment Amount")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
-            payment_window = sg.Window('Make Payment', payment_layout)
-            event, paymentinput = payment_window.read()
-            for member in master_list:
-                if correct_username == member.username:
-                    member.balance = int(paymentinput[2])
-                    print (member.balance)
-    
+
 
 def Register():
     global member_data
@@ -156,7 +159,28 @@ def Register():
     member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this data fram to the master data frame 
     member_data.to_csv('allmembers.csv')
     return True 
+    
+def memberlogin():
+    layout_member = [[sg.Text('Choose whether to sign up for a class or make a payment')],
+          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Exit()]]
+    member_window = sg.Window('Welcome', layout_member)
+    event, choice = member_window.read()
+    if event == "Make Payment":
+        payment_layout =   [[sg.Text("Enter Credit Card")],[sg.Input()], [sg.Text("Enter Security code")],[sg.Input()], [sg.Text("Enter Payment Amount")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
+        payment_window = sg.Window('Make Payment', payment_layout)
+        event, paymentinput = payment_window.read()
+    return None 
 
+def coachlogin():
+    master_list = importdataframe(member_data)
+    attendance_list = generateattendancelist(master_list) 
+    runclass(attendance_list)
+    return None 
+
+def treasurerlogin():
+    temp = IncomeStatement()
+    temp.UI()
+    return None 
 
 values1=[0]
 layout1 = [[sg.Text('Choose whether to login or register as a club member')],
@@ -175,23 +199,12 @@ window1.close()
 #if not, add to a list of members who have not paid 
 
 
-def importdataframe(dataframe):
-    master_list = []
-    for row in range (0,dataframe.shape[0]):
-        newmember = Member(dataframe.iloc[row]['Type'], dataframe.iloc[row]['First Name'],dataframe.iloc[row]['Last Name'],dataframe.iloc[row]['Phone'],dataframe.iloc[row]['Address'],dataframe.iloc[row]['Username'],
-        dataframe.iloc[row]['Password'], dataframe.iloc[row]['self_paid'], dataframe.iloc[row]['self_attendance'], dataframe.iloc[row]['self_weekspaid'],dataframe.iloc[row]['self_penalty'],dataframe.iloc[row]['self_balance'])
-        master_list.append(newmember)
-    return master_list 
-
-
-master_list = importdataframe(member_data)
 def generateattendancelist(master_list):
     attendance_list = []
     for i in range(0,3):
-        attendance_list.append(i)
+        attendee = master_list[i]
+        attendance_list.append(attendee)
     return attendance_list 
-
-attendance_list = generateattendancelist(master_list) 
         
 #show drop down class for every 7 days (show whole month... 4 classes)
 # after a user schedules a class, automatically go to a payment window if self.paid == False 
@@ -218,8 +231,7 @@ def runclass(attendancelist): #some kind of attendance list after a class submit
     if len(droplist)>=1:
         removemembers(droplist)
     
-runclass(attendance_list)
-        
+    return None         
 
 
 def removemembers(alist): #because the user has a penalty, no longer eligible to be in the club. Remove from main dataframe. 
@@ -252,7 +264,7 @@ def notifymembers(penaltylist):
     notify_layout = [[sg.Listbox(
             values=notifylist, enable_events=True, size=(40, 20),
         )]]
-    notify_layout2 = [[sg.Text("Please note you have a negative balance after your list class. \nMake a payment to resolve your debts")],[sg.Button('Send Text')]]
+    notify_layout2 = [[sg.Text("Please note you have a negative balance after your last class. \nMake a payment to resolve your debts")],[sg.Button('Send Text')]]
     notify_layout_final = [
     [
         sg.Column(notify_layout),
