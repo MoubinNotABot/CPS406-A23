@@ -187,7 +187,6 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
     for person in attendancelist: 
         if (person.balance < 10) and (person.paid == False): #let's say class is $10, if balance is less than $10  and haven't paid for month-> debt 
             person.penalty +=1  #flag that this person is in debt 
-            person.balance = person.balance - 10 
             if person.penalty == 1: #if the person only has one penalty of 1, the just need to be notified 
                 notifylist.append(person)
                 notifymembersofpenalty(notifylist) #  function to notify members in the penalty list 
@@ -195,6 +194,8 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
                 droplist.append(person) #function to drop members who have skipped payment more than once 
         elif (person.balance < 10) and (person.paid == False):
             revenueamount += 10 
+        person.balance = person.balance - 10 
+        person.attendance = person.attendance + 1 
         IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
 
     
@@ -308,9 +309,15 @@ def memberlogin(): #use this function to let members schedule and pay for a clas
     return None 
 
 def coachlogin(): #coach to choose wheter to run a class and submit attednance, modify member list(to dop members), send text for reminders and notifications  
-    master_list = importdataframe(member_data)
-    attendance_list = generateattendancelist(master_list) #when user submits attendance list 
-    runclass(attendance_list) #user can drop members after submitting an attendance list for a class 
+    coachlayout = [[sg.Text('Do you want to submit attendance for a class?')],
+          [sg.Button('Submit Attendance'),sg.Exit()]]
+    coach_window = sg.Window('Coach Login', coachlayout)
+    event, values = coach_window.read()
+    if event == "Submit Attendance":    #Moubin attendance function here 
+        master_list = importdataframe(member_data)
+        attendance_list = generateattendancelist(master_list) #when user submits attendance list 
+        runclass(attendance_list) #user can drop members after submitting an attendance list for a class 
+    
     futureclasses(master_list) #send text for reminders 
     return None 
 

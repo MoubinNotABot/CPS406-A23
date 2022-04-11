@@ -21,7 +21,7 @@ class Member:
      self.weekspaid = weekspaid  #list of boolean values to determine whether they have paid for each month in a year
                             #e.g. [False,False,False] means they have not paid for the months of January,February and March 
                             #initially all months will be False 
-     self.penalty = penalty #if member has skipped a payment (either not paid in advance for the month or not paid for a class), raise this flag to true 
+     self.penalty = penalty #if member has skipped a payment (either not paid in advance for the month or not paid for a class), penalty increases by 1  
      self.balance = balance #keeps track of any payments a member has made for each class (if they choose not to pay for the month)
                             #increment this every time a member pays for a class 
 
