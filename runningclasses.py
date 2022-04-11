@@ -7,22 +7,22 @@ import os
 sg.theme('Dark Blue 3')  
 
 
-#let's say classes run every Tuesday of the month, need interface which allows a member to register for a class 
-#for each class, need a list of all members that have attended that class 
-#check that list to see if the members have paid in advance for that month, or paid for that class as a one-time fee 
-#if not, add to a list of members who have not paid 
+'''
+need to load the proper data before we run the user interface 
+'''
 
-member_path = '/Users/rachitasingh/CPS406-A23'
-if os.path.isfile(member_path):
+member_path = '/Users/rachitasingh/CPS406-A23/allmembers.csv' #local path where .csv file containing all member data will be saved 
+if os.path.isfile(member_path): #if there is already a file, load that file 
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
-else:
+else: #othwerise create a new csv file (in the format needed for the member database) and load that file 
     member_data = pd.DataFrame(columns = ['Type', 'First Name', 'Last Name', 'Phone', 'Address', 'Username', 'Password','self_paid','self_attendance','self_weekspaid','self_penalty','self_balance'])
     member_data.to_csv('allmembers.csv')
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 
-IncomeStatement = IncomeStatement()    
+IncomeStatement = IncomeStatement() #create a new income state class to keep track of profits, expenses and debt 
 
-def importdataframe(dataframe):
+def importdataframe(dataframe): #this function takes the dataframe containing member information and creates  a lsit of all members so that important attributes can be 
+    #changed/tracked 
     master_list = []
     for row in range (0,dataframe.shape[0]):
         newmember = Member(dataframe.iloc[row]['Type'], dataframe.iloc[row]['First Name'],dataframe.iloc[row]['Last Name'],dataframe.iloc[row]['Phone'],dataframe.iloc[row]['Address'],dataframe.iloc[row]['Username'],
@@ -31,53 +31,59 @@ def importdataframe(dataframe):
     return master_list 
 
 
-def Login():
+def Login(): #checks whether member username and password is correct when user logs in, based on the type of user (trasurer,member, coach) the interface will be different 
     global member_data
     member_usernames = list(member_data['Username']) 
     member_passwords = list(member_data['Password']) 
     master_list = importdataframe(member_data)
-
+    
+    values1=[0]
     username_layout = [[sg.Text('Enter Username')],
           [sg.Input()],
           [sg.Button('Enter'),sg.Exit()]]
     username_window = sg.Window('Login', username_layout)
     event, values1 = username_window.read()
-    if (event == sg.WIN_CLOSED) or (event == 'Exit'):
-        return None 
     while (values1[0] not in member_usernames):
-        usernameerror_layout = [[sg.Text("Username not found, try again")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
-        usernameerror_window = sg.Window('Login', usernameerror_layout)
-        event, values1 = usernameerror_window.read()
         if (event == sg.WIN_CLOSED) or (event == 'Exit'):
+            username_window.close() 
             return None 
+        else: 
+            usernameerror_layout = [[sg.Text("Username not found, try again")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
+            usernameerror_window = sg.Window('Login', usernameerror_layout)
+            event, values1 = usernameerror_window.read()
+    if values1[0]  in member_usernames:
+        username_window.close()
     correct_username = values1[0]
-    
     password_layout = [[sg.Text("Enter Password")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
     password_window = sg.Window('Login', password_layout)
     event, values2 = password_window.read()
-    if (event == sg.WIN_CLOSED) or (event == 'Exit'):
-        return None 
     while (values2[0] not in member_passwords):
         passworderror_layout = [[sg.Text("Password not found, try again")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
         passworderror_window = sg.Window('Login', passworderror_layout)
         event, values = passworderror_window.read()
         if (event == sg.WIN_CLOSED) or (event == 'Exit'):
+            passworderror_window .close() 
             return None 
+    if (values2[0]  in member_passwords):
+           password_window.close()
+
+
 
     ''' Need GUI here so that when members login, they can register for all classes running that month'''
     for person in master_list:
         if person.username == correct_username:
             correct_type = person.type 
     if correct_type.lower() == 'member':
-        memberlogin()
+        memberlogin() #call member interface if user is a member 
     elif correct_type.lower() == 'coach':
-        coachlogin()
-    elif correct_type.lower() == 'treasurer':
-        treasurerlogin()
+        coachlogin() #call coach interface if user is a coach 
+    elif correct_type.lower() == 'treasurer': 
+        treasurerlogin() #call treasurer interface if users is a treasurer 
+    return None 
 
 
 
-def Register():
+def Register(): #allows users to register a coach, member or treasurer 
     global member_data
     global coach_data
     global treasurer_data
@@ -155,75 +161,14 @@ def Register():
             return None 
         password  = values8[0]
         break 
-    temp =  Member(type.tolower(), firstname,lastname,phone,address,username,password,False,0,0,0,0)
-    temp_df = pd.DataFrame({'Type': type.tolower(),'First Name':[firstname], 'Last Name': [lastname], 'Phone': [phone], 'Address': [address], 'Username': [username], 'Password':[password], 
-    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance] })
-    member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this data fram to the master data frame 
+    temp =  Member(type.lower(), firstname,lastname,phone,address,username,password,False,0,0,0,0)
+    temp_df = pd.DataFrame({'Type': type.lower(),'First Name':[firstname], 'Last Name': [lastname], 'Phone': [phone], 'Address': [address], 'Username': [username], 'Password':[password], 
+    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance] }) #create a temp_df for the new member that has been created 
+    member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this row from the data frame to the master data frame being used to track all members 
     member_data.to_csv('allmembers.csv')
     return None  
-    
-def memberlogin(): #use this function to let members schedule and pay for a class 
-    layout_member = [[sg.Text('Choose whether to sign up for a class or make a payment')],
-          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Exit()]]
-    member_window = sg.Window('Welcome', layout_member)
-    event, choice = member_window.read()
-    if event == "Make Payment":
-        payment_layout =   [[sg.Text("Enter Credit Card")],[sg.Input()], [sg.Text("Enter Security code")],[sg.Input()], [sg.Text("Enter Payment Amount")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
-        payment_window = sg.Window('Make Payment', payment_layout)
-        event, paymentinput = payment_window.read()
-    return None 
 
-def coachlogin(): #modify member list, submit attendance list, send text for reminders and notifications  
-    master_list = importdataframe(member_data)
-    attendance_list = generateattendancelist(master_list) 
-    runclass(master_list)
-    futureclasses(master_list)
-    return None 
-
-def treasurerlogin(): #checkincome statement to date, manage coach list and schedule 
-    [[sg.Text('Choose whether to manage coach list or check financials')],
-        [sg.Button('Manage Coach List'), sg.Button('Check Financials'),sg.Exit()]]
-    treasurer_window = sg.Window('Treasurer Login', layout1)
-    event, values =  treasurer_window.read()
-    if event == "Manage Coach List":
-        count = 0 #checks how many times in the month coach has run a class, pay coach based on this number
-        layout = [[sg.Text('Confirm coach attendance')],
-        [sg.Checkbox('April 7', size=(12, 1), default=False),],
-        [sg.Checkbox('April 14', size=(12, 1), default=False),],
-        [sg.Checkbox('April 21', size=(12, 1), default=False),],
-        [sg.Checkbox('April 28', size=(12, 1), default=False),],
-        [sg.Button('Submit')]]
-        coachattendancewindow = sg.Window('Manage Coach List', layout, font=("Helvetica", 12))    
-        event, values = coachattendancewindow.read()
-        if event == 'Submit':
-            for i in values.values():
-                if i == True:
-                    count = count + 1 
-        IncomeStatement.paycoach(count)
-
-    elif event == "Check Financials":
-        IncomeStatement.UI()
-    
-    return None 
-
-values1=[0]
-layout1 = [[sg.Text('Choose whether to login or register as a club member')],
-        [sg.Button('Login'), sg.Button('Register'),sg.Exit()]]
-window1 = sg.Window('Salsa Dancing 101', layout1)
-event, values = window1.read()
-if event == "Register":
-        Register()
-elif  event == "Login":
-        Login()
-window1.close()
-
-#let's say classes run every Tuesday of the month, need interface which allows a member to register for a class 
-#for each class, need a list of all members that have attended that class 
-#check that list to see if the members have paid in advance for that month, or paid for that class as a one-time fee 
-#if not, add to a list of members who have not paid 
-
-
-def generateattendancelist(master_list):
+def generateattendancelist(master_list): #use this function to generate an attendance list for a class 
     attendance_list = []
     for i in range(0,3):
         attendee = master_list[i]
@@ -233,7 +178,6 @@ def generateattendancelist(master_list):
 #show drop down class for every 7 days (show whole month... 4 classes)
 # after a user schedules a class, automatically go to a payment window if self.paid == False 
 # once user enters credit card, increment self.balance by 10 and incr. self.weekspaid by 1 
-
 
 
 def runclass(attendancelist): #paramater attendancelist: some kind of attendance list after a class submitted by a coach 
@@ -285,7 +229,7 @@ def removemembers(alist): #because the user has a penalty, no longer eligible to
                      maindf =  maindataframe.drop()
     return None
 
-removemembers(['Rachita'])
+#removemembers(['Rachita'])
 
 def notifymembersofpenalty(penaltylist):
     notifylist = penaltylist
@@ -305,7 +249,7 @@ def notifymembersofpenalty(penaltylist):
     if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Send Text'):
         notify_window.close()
     return None
-notifymembersofpenalty(['Rachita'])
+#notifymembersofpenalty(['Rachita'])
 
 # def notifymembersofclass(memberlist):
 #     notifylist = memberlist 
@@ -346,7 +290,93 @@ def futureclasses(attendance_list):   #notify all members about changes or detai
     if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Send Message'):
         notify_window.close()
     return None
-futureclasses(['Rachita'])
+#futureclasses(['Rachita'])
     
+    
+def memberlogin(): #use this function to let members schedule and pay for a class 
+    layout_member = [[sg.Text('Choose whether to sign up for a class or make a payment')],
+          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Exit()]]
+    member_window = sg.Window('Welcome', layout_member)
+    event, choice = member_window.read()
+    if event == "Make Payment":
+        payment_layout =   [[sg.Text("Enter Credit Card")],[sg.Input()], [sg.Text("Enter Security code")],[sg.Input()], [sg.Text("Enter Payment Amount")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
+        payment_window = sg.Window('Make Payment', payment_layout)
+        event, paymentinput = payment_window.read()
+    return None 
 
+def coachlogin(): #modify member list, submit attendance list, send text for reminders and notifications  
+    master_list = importdataframe(member_data)
+    attendance_list = generateattendancelist(master_list) 
+    runclass(master_list)
+    futureclasses(master_list)
+    return None 
+
+def treasurerlogin(): #check income statement to date, manage coach list and schedule 
+    treasurerlayout = [[sg.Text('Choose whether to manage coach list or check financials')],
+        [sg.Button('Manage Coach List'), sg.Button('Check Financials'),sg.Button('Log out')]]
+    treasurer_window = sg.Window('Treasurer Login', treasurerlayout)
+    event, values =  treasurer_window.read()
+    while (event != "Log out") and (event != sg.WIN_CLOSED): 
+        if event == "Manage Coach List": 
+            count = 0  #for any given month, count how many times in the month coach has run a class, pay coach based on this number
+            coachattendancelayout = [[sg.Text('Confirm coach attendance')],
+            [sg.Checkbox('Jan 7', size=(12, 1), default=False),],
+            [sg.Checkbox('Jan 14', size=(12, 1), default=False),],
+            [sg.Checkbox('Jan 21', size=(12, 1), default=False),],
+            [sg.Checkbox('Jan 28', size=(12, 1), default=False),],
+            [sg.Button('Submit')]]
+            coachattendancewindow = sg.Window('Manage Coach List', coachattendancelayout)    
+            event, values = coachattendancewindow.read()
+            if event == 'Submit': #once treasurer submits checklist with dates for coach attendance, check which boxes have been selected as "True" since these are the dates the coach has attednance 
+                for i in values.values():
+                    if i == True:
+                        count = count + 1 
+                        IncomeStatement.updatecoachexpense(count) #add this to list of expenses for coach
+                        coachattendancewindow.close()
+        elif event == "Check Financials": #if user wants to check financials, display the income state to date 
+            financelayout = [[sg.Text('Choose whether to see income statement, see profits, see debts, or pay rent, or close entries for the month')],
+            [sg.Button('See Income Statement'), sg.Button('See Profits'),sg.Button('See Debts'),sg.Button('Pay Rent'),sg.Button('Pay Coach'),sg.Button('Close Entries')]]
+            financials_window = sg.Window('Check Financials', financelayout)
+            event, values = financials_window.read()
+            while event != sg.WIN_CLOSED: 
+                if event == "See Income Statement":
+                    IncomeStatement.UI()
+                elif event == 'See Profits':
+                    IncomeStatement.seeprofits()
+                elif event == 'See Debts':
+                    IncomeStatement.seedebts()
+                elif event == 'Pay Rent':
+                    IncomeStatement.payrent()
+                elif event == 'Pay Coach':
+                    IncomeStatement.paycoach()
+                elif event == 'Close Entries':
+                    IncomeStatement.closemonth(True)
+                event, values = financials_window.read()
+            if (event == sg.WIN_CLOSED):
+                financials_window.close()
+                
+        #treasurer_window = sg.Window('Treasurer Login', layout1)
+        event, values =  treasurer_window.read()
+
+    if (event == "Log out"):
+        treasurer_window.close()
+        displaymain()
+    if (event == sg.WIN_CLOSED):
+        treasurer_window.close()
+
+    return None 
+
+def displaymain():
+    layout1 = [[sg.Text('Choose whether to login or register as a club member')],
+        [sg.Button('Log in'), sg.Button('Register'),sg.Exit()]]
+    window1 = sg.Window('Salsa Dancing 101', layout1)
+    event, values = window1.read()
+    if event == "Register":
+            Register()
+    elif  event == "Log in":
+            Login()
+    window1.close()
+    return None 
+displaymain()
+    
 

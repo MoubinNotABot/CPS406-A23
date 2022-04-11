@@ -1,0 +1,5 @@
+,Type,First Name,Last Name,Phone,Address,Username,Password,self_paid,self_attendance,self_weekspaid,self_penalty,self_balance
+0,coach,James,Smith,111 222 333,ABC Street,jsmith,a,False,0,0,0,0
+0,member,Rachita,Singh,111 222 3333,ABC Street,rsingh,b,False,0,0,0,0
+0,member,Jane,Doe,111 222 3333,ABC Street,jdoe,a,False,0,0,0,0
+0,treasurer,Michael,Jones,111 222 3333,ABC Street,mjones,a,False,0,0,0,0
