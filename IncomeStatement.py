@@ -134,7 +134,7 @@ class IncomeStatement:
         income_layout = [
         [sg.Text("Revenue from classes")],
         [sg.Listbox(values=[self.revenue['Classes']], enable_events=True, size=(25, 1))],
-        [sg.Text("Revenue from members who paid in advance")],
+        [sg.Text("Accounts Payable")],
         [sg.Listbox(values=[self.revenue['Accounts Payable']], enable_events=True, size=(25, 1))]]
 
         expenses_layout = [ 

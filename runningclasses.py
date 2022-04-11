@@ -195,7 +195,7 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
                 droplist.append(person) #function to drop members who have skipped payment more than once 
         elif (person.balance < 10) and (person.paid == False):
             revenueamount += 10 
-            IncomeStatement.
+        IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
 
     
         # if person.paid == False: #if the person does not pay by month...
@@ -343,6 +343,7 @@ def treasurerlogin(): #check income statement to date, manage coach list and sch
             event, values = financials_window.read()
             while event != sg.WIN_CLOSED: 
                 if event == "See Income Statement":
+                    IncomeStatement.updateAP(importdataframe(member_data))
                     IncomeStatement.UI()
                 elif event == 'See Profits':
                     IncomeStatement.seeprofits()
@@ -353,7 +354,6 @@ def treasurerlogin(): #check income statement to date, manage coach list and sch
                 elif event == 'Pay Coach':
                     IncomeStatement.paycoach()
                 elif event == 'Close Entries':
-                    IncomeStatement.updateAP(importdataframe(member_data))
                     IncomeStatement.closemonth(True)
                 event, values = financials_window.read()
             if (event == sg.WIN_CLOSED):
