@@ -187,14 +187,16 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
     for person in attendancelist: 
         if (person.balance < 10) and (person.paid == False): #let's say class is $10, if balance is less than $10  and haven't paid for month-> debt 
             person.penalty +=1  #flag that this person is in debt 
-            person.balance = person.balance - 10 #implemented a $2 penality if a person has skipped a class more than once 
-            if person.penalty <2:
+            person.balance = person.balance - 10 
+            if person.penalty == 1: #if the person only has one penalty of 1, the just need to be notified 
                 notifylist.append(person)
-                notifymembersofpenalty(notifylist) # create function to notify members in the penalty list 
+                notifymembersofpenalty(notifylist) #  function to notify members in the penalty list 
             elif person.penalty >=2:
-                droplist.append(person)
-        else:
-            revenueamount  += 10
+                droplist.append(person) #function to drop members who have skipped payment more than once 
+        elif (person.balance < 10) and (person.paid == False):
+            revenueamount += 10 
+            IncomeStatement.
+
     
         # if person.paid == False: #if the person does not pay by month...
         #     person.balance = person.balance - 10 # subtract $10 off balance to pay for class 
@@ -208,7 +210,6 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
 
 def removemembers(alist): #because the user has a penalty, no longer eligible to be in the club. Remove from main dataframe. 
     global member_data 
-    maindataframe = importdataframe(member_data)
     droplist = alist
     drop_layout = [[sg.Listbox(
             values=droplist, enable_events=True, size=(40, 20),
@@ -226,7 +227,7 @@ def removemembers(alist): #because the user has a penalty, no longer eligible to
         for classattendee in alist: 
             for onemember in maindf:
                 if classattendee.username == onemember.username:
-                     maindf =  maindataframe.drop()
+                     maindf =  member_data.drop()
     return None
 
 #removemembers(['Rachita'])
@@ -300,15 +301,17 @@ def memberlogin(): #use this function to let members schedule and pay for a clas
     event, choice = member_window.read()
     if event == "Make Payment":
         payment_layout =   [[sg.Text("Enter Credit Card")],[sg.Input()], [sg.Text("Enter Security code")],[sg.Input()], [sg.Text("Enter Payment Amount")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
-        payment_window = sg.Window('Make Payment', payment_layout)
+        payment_window = sg.Window('Make Payment', payment_layout) 
         event, paymentinput = payment_window.read()
+        #need functionality: if person has paid payments for the month, self.paid = True 
+        #otherwise incremement self.balance by 10 
     return None 
 
-def coachlogin(): #modify member list, submit attendance list, send text for reminders and notifications  
+def coachlogin(): #coach to choose wheter to run a class and submit attednance, modify member list(to dop members), send text for reminders and notifications  
     master_list = importdataframe(member_data)
-    attendance_list = generateattendancelist(master_list) 
-    runclass(master_list)
-    futureclasses(master_list)
+    attendance_list = generateattendancelist(master_list) #when user submits attendance list 
+    runclass(attendance_list) #user can drop members after submitting an attendance list for a class 
+    futureclasses(master_list) #send text for reminders 
     return None 
 
 def treasurerlogin(): #check income statement to date, manage coach list and schedule 
@@ -350,6 +353,7 @@ def treasurerlogin(): #check income statement to date, manage coach list and sch
                 elif event == 'Pay Coach':
                     IncomeStatement.paycoach()
                 elif event == 'Close Entries':
+                    IncomeStatement.updateAP(importdataframe(member_data))
                     IncomeStatement.closemonth(True)
                 event, values = financials_window.read()
             if (event == sg.WIN_CLOSED):

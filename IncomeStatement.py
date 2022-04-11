@@ -1,3 +1,7 @@
+from  member import Member
+
+
+
 import PySimpleGUI as sg
 
 rent = 200 
@@ -7,7 +11,7 @@ sg.theme('Dark Blue 3')  # please make your windows colorful
 
 class IncomeStatement: 
     def __init__(self):
-        self.revenue = {'Classes': 0}
+        self.revenue = {'Classes': 0,'Accounts Payable': 0} #Classes = amount gen. from people who pay by class and AP = amount gen. from people who pay by month
         self.expenses = {'Coach': 0, 'Rent':200}
         self.log = [0]*12
         self.monthlyAP = 0
@@ -37,6 +41,7 @@ class IncomeStatement:
     def resetyear(self,newyear):
         if newyear == True: 
              self.revenue ['Classes'] = 0 #revenue comes from class payments 
+             self.revenue['Accounts Payable']
              self.expenses['Coach'] = 0 #paying the coach is an expense 
              self.expenses['Rent'] = 0 #paying rent is an expense 
              self.log = [0]*12
@@ -49,7 +54,7 @@ class IncomeStatement:
     #     if classended == True: 
     #         self.revenue['Class'] += number_of_attendees * class_price
     
-    def addtorevenue(self, amount): #anytime someone makes a payment, add to revenue generated from classes 
+    def addtorevenue(self, amount): #after a class is run, add to revenue if that person pays by class 
         self.revenue['Classes'] += amount 
 
     def inadvance(self,number_of_members,amount,begmonth):
@@ -99,7 +104,7 @@ class IncomeStatement:
         
     def closemonth(self,endmonth):
         if endmonth == True:
-            monthlyprofit = self.revenue['Classes'] - self.expenses['Coach'] - self.expenses['Rent']
+            monthlyprofit = self.revenue['Classes'] +  self.revenue['Accounts Payable']-self.expenses['Coach'] - self.expenses['Rent']
             self.log[self.currentmonth] = monthlyprofit 
             if self.expenses['Rent'] > 0:
                 self.rentdebt[self.currentmonth] = self.expenses['Rent'] 
@@ -111,7 +116,7 @@ class IncomeStatement:
 
     def resetmonth(self,endmonth):
         if endmonth == True: 
-            self.monthlyAP = 0 
+            self.revenue['Accounts Payable'] = 0 
             self.revenue['Classes'] = 0 
             self.expenses['Coach'] = 0 
             self.expenses['Rent'] = rent 
@@ -124,11 +129,13 @@ class IncomeStatement:
     #         self.unpaidrent = potential_rent_debt - self.expenses['Rent'] 
         
  
-    def UI(self): #creates a window displaying the montly expenses(rent, coach) and monthly revenue
+    def UI(self): #creates a window displaying the montly expenses(rent, coach) and monthly revenue(from those who paid for a single class/those who paid in advance)
         sg.theme('Dark Blue 3')  # please make your windows colorful
         income_layout = [
-        [sg.Text("Revenue")],
-        [sg.Listbox(values=[self.revenue['Classes'] ], enable_events=True, size=(25, 1))],]
+        [sg.Text("Revenue from classes")],
+        [sg.Listbox(values=[self.revenue['Classes']], enable_events=True, size=(25, 1))],
+        [sg.Text("Revenue from members who paid in advance")],
+        [sg.Listbox(values=[self.revenue['Accounts Payable']], enable_events=True, size=(25, 1))]]
 
         expenses_layout = [ 
         [sg.Text("Coach Payments")],
@@ -176,6 +183,19 @@ class IncomeStatement:
         if event == sg.WIN_CLOSED:
             debtwindow.close()
         return None 
+
+    def updateAP(self,alist):
+        count = 0 
+        for person in alist:
+            if person.paid == True:
+                count = count + 1
+        self.revenue['Accounts Payable'] = count * 40 
+        return None 
+
+
+
+
+        
 
 
 
