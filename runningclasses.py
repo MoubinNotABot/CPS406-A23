@@ -11,7 +11,7 @@ sg.theme('Dark Blue 3')
 need to load the proper data before we run the user interface 
 '''
 
-member_path = '/Users/rachitasingh/CPS406-A23/allmembers.csv' #local path where .csv file containing all member data will be saved 
+member_path = 'C:\\Users\\tahmi\\Documents\\GitHub\\CPS406-A23\\allmembers.csv' #local path where .csv file containing all member data will be saved 
 if os.path.isfile(member_path): #if there is already a file, load that file 
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 else: #othwerise create a new csv file (in the format needed for the member database) and load that file 
@@ -23,6 +23,7 @@ IncomeStatement = IncomeStatement() #create a new income state class to keep tra
 
 def importdataframe(dataframe): #this function takes the dataframe containing member information and creates  a lsit of all members so that important attributes can be 
     #changed/tracked 
+    global master_list
     master_list = []
     for row in range (0,dataframe.shape[0]):
         newmember = Member(dataframe.iloc[row]['Type'], dataframe.iloc[row]['First Name'],dataframe.iloc[row]['Last Name'],dataframe.iloc[row]['Phone'],dataframe.iloc[row]['Address'],dataframe.iloc[row]['Username'],
@@ -30,7 +31,7 @@ def importdataframe(dataframe): #this function takes the dataframe containing me
         master_list.append(newmember)
     return master_list 
 
-
+importdataframe(member_data)
 def Login(): #checks whether member username and password is correct when user logs in, based on the type of user (trasurer,member, coach) the interface will be different 
     global member_data
     member_usernames = list(member_data['Username']) 
@@ -74,7 +75,7 @@ def Login(): #checks whether member username and password is correct when user l
         if person.username == correct_username:
             correct_type = person.type 
     if correct_type.lower() == 'member':
-        memberlogin() #call member interface if user is a member 
+        memberlogin(correct_username) #call member interface if user is a member 
     elif correct_type.lower() == 'coach':
         coachlogin() #call coach interface if user is a coach 
     elif correct_type.lower() == 'treasurer': 
@@ -167,6 +168,20 @@ def Register(): #allows users to register a coach, member or treasurer
     member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this row from the data frame to the master data frame being used to track all members 
     member_data.to_csv('allmembers.csv')
     return None  
+def scheduleUI(): #function for the schedule GUI
+    layout=[[sg.Text('Schedule an appointment',size=(20, 1),justification='left')],
+        [sg.Combo(['April 7th','April 14th','April 21st', 'April 28th',],default_value='April 7th',key='board')],
+        [sg.Button('Proceed with payment',),sg.Button('CANCEL',)]]
+    win =sg.Window('Schedule',layout)
+    while True:
+        e,v=win.read()
+        print(e,v)
+        if e == sg.WIN_CLOSED or e == 'CANCEL':
+                break
+        elif e== 'Proceed with payment':
+                payment_normal()
+
+    win.close()
 
 def generateattendancelist(master_list): #use this function to generate an attendance list for a class 
     attendance_list = []
@@ -294,19 +309,58 @@ def futureclasses(attendance_list):   #notify all members about changes or detai
 #futureclasses(['Rachita'])
     
     
-def memberlogin(): #use this function to let members schedule and pay for a class 
+def memberlogin(username): #use this function to let members schedule and pay for a class 
     layout_member = [[sg.Text('Choose whether to sign up for a class or make a payment')],
-          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Exit()]]
-    member_window = sg.Window('Welcome', layout_member)
-    event, choice = member_window.read()
-    if event == "Make Payment":
-        payment_layout =   [[sg.Text("Enter Credit Card")],[sg.Input()], [sg.Text("Enter Security code")],[sg.Input()], [sg.Text("Enter Payment Amount")],[sg.Input()], [sg.Button("Enter"),sg.Exit()]]
-        payment_window = sg.Window('Make Payment', payment_layout) 
-        event, paymentinput = payment_window.read()
+          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Button('Exit')]]
+    member_window = sg.Window('Welcome', layout_member) 
+    while True:
+        event,values=member_window.read()
+        if event == sg.WIN_CLOSED or event == 'Exit':
+            break
+        if event == 'Schedule Class':
+            layout=[[sg.Text('Schedule an appointment',size=(20, 1),justification='left')],
+                    [sg.Combo(['April 7th','April 14th','April 21st', 'April 28th',],default_value='April 7th',key='board')],
+                    [sg.Button('Proceed with payment',),sg.Button('CANCEL',)]]
+            win =sg.Window('Schedule',layout)
+
+            while True:
+                event,values = win.read()
+                if event == 'CANCEL' or event == sg.WIN_CLOSED:
+                    break
+                if event == 'Proceed with payment':
+                    layout = [[sg.Text('Each class costs 10 dollars and monthly payments cost 40 dollars')],
+                              [sg.Text('Enter Credit Card Number')],
+                              [sg.Input('', enable_events=True,  key='-INPUT-')],
+                              [sg.Text('Enter Secuirity Code')],
+                              [sg.Input('', enable_events=True,  key='-INPUT2-')],
+                              [sg.Text('Enter Expiration Date')],
+                              [sg.Input('', enable_events=True, key='-INPUT3-')],
+                              [sg.Button('Pay per class'), sg.Button('Pay for month'), sg.Button('Exit')]]
+                    window=sg.Window('Payment Information',layout)
+
+                    while True:
+                        event1,values1=window.read()
+                        if event1 == 'Exit' or event1 == sg.WIN_CLOSED:
+                            break
+                        elif event1 == 'Pay for month':
+                            sg.Popup('You have successfully paid for the month')
+                            for i in master_list:
+                                if (i.username==username):
+                                    i.paid=True
+                            member_data.loc[member_data['Username']==username, ['self_paid']]=True
+                            print (member_data)
+                        elif event1 == 'Pay per class':
+                            sg.Popup('You have successfully paid for the class')
+                            for i in master_list:
+                                if(i.username==username):
+                                    i.balance+=10
+
+                    window.close()
+                win.close()
+            member_window.close()
         #need functionality: if person has paid payments for the month, self.paid = True 
         #otherwise incremement self.balance by 10 
     return None 
-
 def coachlogin(): #coach to choose wheter to run a class and submit attednance, modify member list(to dop members), send text for reminders and notifications  
     master_list = importdataframe(member_data)
     attendance_list = generateattendancelist(master_list) #when user submits attendance list 
