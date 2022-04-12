@@ -8,7 +8,7 @@ import os
 
  
 class Member:
-    def __init__(self,type,fname, lname,phone,address,username,password,paid,attendance,weekspaid,penalty,balance):
+    def __init__(self,type,fname, lname,phone,address,username,password,paid,attendance,weekspaid,penalty,balance, discountCount):
      self.type = type #string value representing whether member is a coach, treasurer or attendee 
      self.firstname = fname 
      self.lastname = lname
@@ -21,9 +21,10 @@ class Member:
      self.weekspaid = weekspaid  #list of boolean values to determine whether they have paid for each month in a year
                             #e.g. [False,False,False] means they have not paid for the months of January,February and March 
                             #initially all months will be False 
-     self.penalty = penalty #if member has skipped a payment (either not paid in advance for the month or not paid for a class), raise this flag to true 
+     self.penalty = penalty #if member has skipped a payment (either not paid in advance for the month or not paid for a class), penalty increases by 1  
      self.balance = balance #keeps track of any payments a member has made for each class (if they choose not to pay for the month)
                             #increment this every time a member pays for a class 
+     self.discountCount = discountCount
 
     def resetmonth(self,begmonth): #begmonth is a boolean value to determine whether it is the beginning of the month when the function resetpaid() is called
         if begmonth == True:

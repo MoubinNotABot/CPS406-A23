@@ -11,11 +11,15 @@ sg.theme('Dark Blue 3')
 need to load the proper data before we run the user interface 
 '''
 
+<<<<<<< HEAD
 member_path = 'C:\\Users\\tahmi\\Documents\\GitHub\\CPS406-A23\\allmembers.csv' #local path where .csv file containing all member data will be saved 
+=======
+member_path = './allmembers.csv' #local path where .csv file containing all member data will be saved 
+>>>>>>> b5a99f70b224b6b5191cbe69e6f24df98ff7a225
 if os.path.isfile(member_path): #if there is already a file, load that file 
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 else: #othwerise create a new csv file (in the format needed for the member database) and load that file 
-    member_data = pd.DataFrame(columns = ['Type', 'First Name', 'Last Name', 'Phone', 'Address', 'Username', 'Password','self_paid','self_attendance','self_weekspaid','self_penalty','self_balance'])
+    member_data = pd.DataFrame(columns = ['Type', 'First Name', 'Last Name', 'Phone', 'Address', 'Username', 'Password','self_paid','self_attendance','self_weekspaid','self_penalty','self_balance', 'discount_count'])
     member_data.to_csv('allmembers.csv')
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 
@@ -27,11 +31,18 @@ def importdataframe(dataframe): #this function takes the dataframe containing me
     master_list = []
     for row in range (0,dataframe.shape[0]):
         newmember = Member(dataframe.iloc[row]['Type'], dataframe.iloc[row]['First Name'],dataframe.iloc[row]['Last Name'],dataframe.iloc[row]['Phone'],dataframe.iloc[row]['Address'],dataframe.iloc[row]['Username'],
-        dataframe.iloc[row]['Password'], dataframe.iloc[row]['self_paid'], dataframe.iloc[row]['self_attendance'], dataframe.iloc[row]['self_weekspaid'],dataframe.iloc[row]['self_penalty'],dataframe.iloc[row]['self_balance'])
+        dataframe.iloc[row]['Password'], dataframe.iloc[row]['self_paid'], dataframe.iloc[row]['self_attendance'], dataframe.iloc[row]['self_weekspaid'],dataframe.iloc[row]['self_penalty'],dataframe.iloc[row]['self_balance'],dataframe.iloc[row]['discount_count'])
         master_list.append(newmember)
-    return master_list 
+    return master_list
 
+<<<<<<< HEAD
 importdataframe(member_data)
+=======
+importdataframe(member_data) 
+for i in master_list:
+    print(i.balance)
+
+>>>>>>> b5a99f70b224b6b5191cbe69e6f24df98ff7a225
 def Login(): #checks whether member username and password is correct when user logs in, based on the type of user (trasurer,member, coach) the interface will be different 
     global member_data
     member_usernames = list(member_data['Username']) 
@@ -162,9 +173,9 @@ def Register(): #allows users to register a coach, member or treasurer
             return None 
         password  = values8[0]
         break 
-    temp =  Member(type.lower(), firstname,lastname,phone,address,username,password,False,0,0,0,0)
+    temp =  Member(type.lower(), firstname,lastname,phone,address,username,password,False,0,0,0,0,0)
     temp_df = pd.DataFrame({'Type': type.lower(),'First Name':[firstname], 'Last Name': [lastname], 'Phone': [phone], 'Address': [address], 'Username': [username], 'Password':[password], 
-    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance] }) #create a temp_df for the new member that has been created 
+    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance],'discount_count':[temp.discountCount]  }) #create a temp_df for the new member that has been created 
     member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this row from the data frame to the master data frame being used to track all members 
     member_data.to_csv('allmembers.csv')
     return None  
@@ -185,7 +196,7 @@ def scheduleUI(): #function for the schedule GUI
 
 def generateattendancelist(master_list): #use this function to generate an attendance list for a class 
     attendance_list = []
-    for i in range(0,3):
+    for i in range(0,1):
         attendee = master_list[i]
         attendance_list.append(attendee)
     return attendance_list 
@@ -194,38 +205,35 @@ def generateattendancelist(master_list): #use this function to generate an atten
 # after a user schedules a class, automatically go to a payment window if self.paid == False 
 # once user enters credit card, increment self.balance by 10 and incr. self.weekspaid by 1 
 
+def notifymembersofpenalty(penaltylist):
+    notifylist = []
+    for i in penaltylist:
+        notifylist.append(i.firstname)
+    notify_layout = [[sg.Listbox(
+            values=notifylist, enable_events=True, size=(40, 20),
+        )]]
+    notify_layout2 = [[sg.Text("Please note you have a negative balance after your last class. \nMake a payment to resolve your debts.")],[sg.Button('Send Text')]]
+    notify_layout_final = [
+    [
+        sg.Column(notify_layout),
+        sg.VSeperator(),
+        sg.Column(notify_layout2),
+    ]
+    ]
+    notify_window = sg.Window('Skipped Payments', notify_layout_final)
+    event, values = notify_window.read()
+    if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Send Text'):
+        notify_window.close()
+    return None
 
-def runclass(attendancelist): #paramater attendancelist: some kind of attendance list after a class submitted by a coach 
-    notifylist = [] # list of all members that need to be notified of a skipped payment 
-    droplist = [] #list of all members that need to be drooped from main database because of two skipped payments 
-    revenueamount = 0 #calcules how many people attended AND PAID for the class a
-    for person in attendancelist: 
-        if (person.balance < 10) and (person.paid == False): #let's say class is $10, if balance is less than $10  and haven't paid for month-> debt 
-            person.penalty +=1  #flag that this person is in debt 
-            person.balance = person.balance - 10 
-            if person.penalty == 1: #if the person only has one penalty of 1, the just need to be notified 
-                notifylist.append(person)
-                notifymembersofpenalty(notifylist) #  function to notify members in the penalty list 
-            elif person.penalty >=2:
-                droplist.append(person) #function to drop members who have skipped payment more than once 
-        elif (person.balance < 10) and (person.paid == False):
-            revenueamount += 10 
-        IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
-
-    
-        # if person.paid == False: #if the person does not pay by month...
-        #     person.balance = person.balance - 10 # subtract $10 off balance to pay for class 
-        # if person.discountstatus(): 
-        #     person.balance = person.balance - 9 #10% off the class  
-    if len(droplist)>=1:
-        removemembers(droplist) #function to drop all members who have missed more than two payments 
-    
-    return None         
-
+attendance = generateattendancelist(master_list)
 
 def removemembers(alist): #because the user has a penalty, no longer eligible to be in the club. Remove from main dataframe. 
     global member_data 
-    droplist = alist
+    droplist = []
+    for i in alist:
+        droplist.append(i.firstname)
+        
     drop_layout = [[sg.Listbox(
             values=droplist, enable_events=True, size=(40, 20),
         )], [sg.Button('Drop Members')]]
@@ -245,26 +253,38 @@ def removemembers(alist): #because the user has a penalty, no longer eligible to
                      maindf =  member_data.drop()
     return None
 
+def runclass(attendancelist): #paramater attendancelist: some kind of attendance list after a class submitted by a coach 
+    notifylist = [] # list of all members that need to be notified of a skipped payment 
+    droplist = [] #list of all members that need to be drooped from main database because of two skipped payments 
+    revenueamount = 0 #calcules how many people attended AND PAID for the class a
+    for person in attendancelist: 
+        if (person.balance < 10) and (person.paid == False): #let's say class is $10, if balance is less than $10  and haven't paid for month-> debt 
+            person.penalty +=1  #flag that this person is in debt 
+            if person.penalty == 1: #if the person only has one penalty of 1, the just need to be notified 
+                notifylist.append(person)
+                notifymembersofpenalty(notifylist) #  function to notify members in the penalty list 
+            elif person.penalty >=2:
+                droplist.append(person) #function to drop members who have skipped payment more than once 
+        elif (person.balance < 10) and (person.paid == False):
+            revenueamount += 10 
+        person.balance = person.balance - 10 
+        person.attendance = person.attendance + 1 
+        IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
+
+    
+        # if person.paid == False: #if the person does not pay by month...
+        #     person.balance = person.balance - 10 # subtract $10 off balance to pay for class 
+        # if person.discountstatus(): 
+        #     person.balance = person.balance - 9 #10% off the class  
+    if len(droplist)>=1:
+        removemembers(droplist) #function to drop all members who have missed more than two payments 
+    
+    return None         
+runclass(attendance)
+
+
 #removemembers(['Rachita'])
 
-def notifymembersofpenalty(penaltylist):
-    notifylist = penaltylist
-    notify_layout = [[sg.Listbox(
-            values=notifylist, enable_events=True, size=(40, 20),
-        )]]
-    notify_layout2 = [[sg.Text("Please note you have a negative balance after your last class. \nMake a payment to resolve your debts.")],[sg.Button('Send Text')]]
-    notify_layout_final = [
-    [
-        sg.Column(notify_layout),
-        sg.VSeperator(),
-        sg.Column(notify_layout2),
-    ]
-    ]
-    notify_window = sg.Window('Skipped Payments', notify_layout_final)
-    event, values = notify_window.read()
-    if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Send Text'):
-        notify_window.close()
-    return None
 #notifymembersofpenalty(['Rachita'])
 
 # def notifymembersofclass(memberlist):
@@ -362,9 +382,15 @@ def memberlogin(username): #use this function to let members schedule and pay fo
         #otherwise incremement self.balance by 10 
     return None 
 def coachlogin(): #coach to choose wheter to run a class and submit attednance, modify member list(to dop members), send text for reminders and notifications  
-    master_list = importdataframe(member_data)
-    attendance_list = generateattendancelist(master_list) #when user submits attendance list 
-    runclass(attendance_list) #user can drop members after submitting an attendance list for a class 
+    coachlayout = [[sg.Text('Do you want to submit attendance for a class?')],
+          [sg.Button('Submit Attendance'),sg.Exit()]]
+    coach_window = sg.Window('Coach Login', coachlayout)
+    event, values = coach_window.read()
+    if event == "Submit Attendance":    #Moubin attendance function here 
+        master_list = importdataframe(member_data)
+        attendance_list = generateattendancelist(master_list) #when user submits attendance list 
+        runclass(attendance_list) #user can drop members after submitting an attendance list for a class 
+    
     futureclasses(master_list) #send text for reminders 
     return None 
 
