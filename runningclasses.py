@@ -15,7 +15,7 @@ member_path = './allmembers.csv' #local path where .csv file containing all memb
 if os.path.isfile(member_path): #if there is already a file, load that file 
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 else: #othwerise create a new csv file (in the format needed for the member database) and load that file 
-    member_data = pd.DataFrame(columns = ['Type', 'First Name', 'Last Name', 'Phone', 'Address', 'Username', 'Password','self_paid','self_attendance','self_weekspaid','self_penalty','self_balance'])
+    member_data = pd.DataFrame(columns = ['Type', 'First Name', 'Last Name', 'Phone', 'Address', 'Username', 'Password','self_paid','self_attendance','self_weekspaid','self_penalty','self_balance', 'discount_count'])
     member_data.to_csv('allmembers.csv')
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 
@@ -27,7 +27,7 @@ def importdataframe(dataframe): #this function takes the dataframe containing me
     master_list = []
     for row in range (0,dataframe.shape[0]):
         newmember = Member(dataframe.iloc[row]['Type'], dataframe.iloc[row]['First Name'],dataframe.iloc[row]['Last Name'],dataframe.iloc[row]['Phone'],dataframe.iloc[row]['Address'],dataframe.iloc[row]['Username'],
-        dataframe.iloc[row]['Password'], dataframe.iloc[row]['self_paid'], dataframe.iloc[row]['self_attendance'], dataframe.iloc[row]['self_weekspaid'],dataframe.iloc[row]['self_penalty'],dataframe.iloc[row]['self_balance'])
+        dataframe.iloc[row]['Password'], dataframe.iloc[row]['self_paid'], dataframe.iloc[row]['self_attendance'], dataframe.iloc[row]['self_weekspaid'],dataframe.iloc[row]['self_penalty'],dataframe.iloc[row]['self_balance'],dataframe.iloc[row]['discount_count'])
         master_list.append(newmember)
     return master_list
 
@@ -165,9 +165,9 @@ def Register(): #allows users to register a coach, member or treasurer
             return None 
         password  = values8[0]
         break 
-    temp =  Member(type.lower(), firstname,lastname,phone,address,username,password,False,0,0,0,0)
+    temp =  Member(type.lower(), firstname,lastname,phone,address,username,password,False,0,0,0,0,0)
     temp_df = pd.DataFrame({'Type': type.lower(),'First Name':[firstname], 'Last Name': [lastname], 'Phone': [phone], 'Address': [address], 'Username': [username], 'Password':[password], 
-    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance] }) #create a temp_df for the new member that has been created 
+    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance],'discount_count':[temp.discountCount]  }) #create a temp_df for the new member that has been created 
     member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this row from the data frame to the master data frame being used to track all members 
     member_data.to_csv('allmembers.csv')
     return None  

@@ -1,2 +1,21 @@
-,Type,First Name,Last Name,Phone,Address,Username,Password,self_paid,self_attendance,self_weekspaid,self_penalty,self_balance
-0,member,lol,xd,12345,home1,abcd,abcdd,False,0,0,0,0
+,Type,First Name,Last Name,Phone,Address,Username,Password,self_paid,self_attendance,self_weekspaid,self_penalty,self_balance,discount_count
+0,member,0,0,16,home0,u0,password,False,6,9,0,24,0
+0,member,100,1,0,home1,u1,password,False,4,2,0,0,0
+0,member,200,4,7,home2,u2,password,False,3,11,0,5,0
+0,member,300,9,8,home3,u3,password,False,0,5,0,36,0
+0,member,400,16,54,home4,u4,password,False,6,10,0,36,0
+0,member,500,25,24,home5,u5,password,False,2,15,0,8,0
+0,member,600,36,0,home6,u6,password,False,9,7,0,42,0
+0,member,700,49,45,home7,u7,password,False,3,6,0,48,0
+0,member,800,64,48,home8,u8,password,False,9,0,0,64,0
+0,member,900,81,0,home9,u9,password,False,5,7,0,8,0
+0,member,1000,100,36,home10,u10,password,False,5,16,0,7,0
+0,member,1100,121,40,home11,u11,password,False,7,10,0,6,0
+0,member,1200,144,0,home12,u12,password,False,0,7,0,56,0
+0,member,1300,169,0,home13,u13,password,False,3,3,0,1,0
+0,member,1400,196,32,home14,u14,password,False,4,0,0,20,0
+0,member,1500,225,42,home15,u15,password,False,5,8,0,56,0
+0,member,1600,256,35,home16,u16,password,False,8,18,0,49,0
+0,member,1700,289,0,home17,u17,password,False,1,3,0,0,0
+0,member,1800,324,12,home18,u18,password,False,5,2,0,0,0
+0,member,1900,361,54,home19,u19,password,False,0,10,0,28,0
