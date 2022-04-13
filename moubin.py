@@ -51,6 +51,10 @@ def format(string, cond): # used to align and color the member listing
     return sg.Text(newString, font = "TkFixedFont")
 
 def showListing(membersArr): # given an array, make a window out of it.
+    newArr = copy.deepcopy(membersArr)
+    for i in newArr:
+        if i.type.lower() != 'member':
+            newArr.remove(i)
     col = [ # the part of the col that does not change.
         [
         sg.Text("                                                                                                                "), # space between button and border
@@ -69,7 +73,7 @@ def showListing(membersArr): # given an array, make a window out of it.
 
     # add to col
     number = 1
-    for i in membersArr:
+    for i in newArr:
         
         cond = i.discountstatus() or hasAttendanceDiscount(i) # this desides weather or not a member will be colored
 
@@ -84,8 +88,10 @@ def showListing(membersArr): # given an array, make a window out of it.
         number += 1
     
     # displaying the col.
-    listingLayout = [[sg.Column(col, scrollable=True, vertical_scroll_only=True, size = (1920,1080))]]
-    listingWindow = sg.Window("Member Listing", listingLayout, size=(1920, 1080))
+    listingLayout = [[sg.Column(col, scrollable=True, vertical_scroll_only=True, size = (1500,1000))]]
+    listingWindow = sg.Window("Member Listing", listingLayout, size=(250, 250),resizable=True)
+
+
     
     # add functionality to the buttons. 
     while True:
@@ -94,11 +100,11 @@ def showListing(membersArr): # given an array, make a window out of it.
             break
 
         if event == "Sort by attendance":
-            showListing(sortByAttendance(membersArr))
+            showListing(sortByAttendance(newArr))
             break # closing one window, will close all the windows. 
 
         if event == "Sort by payment":
-            showListing(sortByPaidStreak(membersArr))
+            showListing(sortByPaidStreak(newArr))
             break # closing one window, will close all the windows. 
 
     listingWindow.close() # close the window
@@ -159,7 +165,7 @@ def makeAttendance(): # the ui to get an array of usernames.
         [sg.Multiline(size=(50,50))],
         [sg.Button("Submit")]
     ]
-    window = sg.Window("Attendance", layout, size=(1920,1080))
+    window = sg.Window("Attendance", layout, size=(500,800))
 
     while True:
         event, values = window.read()
@@ -171,10 +177,10 @@ def makeAttendance(): # the ui to get an array of usernames.
     window.close()
     return string.split("\n")
 
-def toPerson(arr): # takes in an array of usernames made by the admin
+def toPerson(arr,list): # takes in an array of usernames made by the admin
     returnArr = []
     for username in arr:
-        for person in members:
+        for person in list:
             if person.getusername() == username:
                 returnArr.append(person)
     return returnArr
@@ -195,7 +201,7 @@ print("##################################")
 # for i in attendance:
 #     print(i.firstname, i.attendance, i.discountCount)
 
-exportToDataBase(members)
+#exportToDataBase(members)
 # def test():
     # # for i in range(10):
     # #     print(i)

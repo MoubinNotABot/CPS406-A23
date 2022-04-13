@@ -3,6 +3,7 @@ import pandas as pd
 import PySimpleGUI as sg
 from  member import Member
 from IncomeStatement import IncomeStatement 
+from moubin import * 
 import os 
 sg.theme('Dark Blue 3')  
 
@@ -11,11 +12,7 @@ sg.theme('Dark Blue 3')
 need to load the proper data before we run the user interface 
 '''
 
-<<<<<<< HEAD
-member_path = 'C:\\Users\\tahmi\\Documents\\GitHub\\CPS406-A23\\allmembers.csv' #local path where .csv file containing all member data will be saved 
-=======
-member_path = './allmembers.csv' #local path where .csv file containing all member data will be saved 
->>>>>>> b5a99f70b224b6b5191cbe69e6f24df98ff7a225
+member_path = '/Users/rachitasingh/CPS406-A23/allmembers.csv' #local path where .csv file containing all member data will be saved 
 if os.path.isfile(member_path): #if there is already a file, load that file 
     member_data = pd.read_csv('allmembers.csv',index_col=[0])
 else: #othwerise create a new csv file (in the format needed for the member database) and load that file 
@@ -35,14 +32,7 @@ def importdataframe(dataframe): #this function takes the dataframe containing me
         master_list.append(newmember)
     return master_list
 
-<<<<<<< HEAD
 importdataframe(member_data)
-=======
-importdataframe(member_data) 
-for i in master_list:
-    print(i.balance)
-
->>>>>>> b5a99f70b224b6b5191cbe69e6f24df98ff7a225
 def Login(): #checks whether member username and password is correct when user logs in, based on the type of user (trasurer,member, coach) the interface will be different 
     global member_data
     member_usernames = list(member_data['Username']) 
@@ -196,7 +186,7 @@ def scheduleUI(): #function for the schedule GUI
 
 def generateattendancelist(master_list): #use this function to generate an attendance list for a class 
     attendance_list = []
-    for i in range(0,1):
+    for i in range(0,0):
         attendee = master_list[i]
         attendance_list.append(attendee)
     return attendance_list 
@@ -230,6 +220,7 @@ attendance = generateattendancelist(master_list)
 
 def removemembers(alist): #because the user has a penalty, no longer eligible to be in the club. Remove from main dataframe. 
     global member_data 
+    global master_list
     droplist = []
     for i in alist:
         droplist.append(i.firstname)
@@ -244,13 +235,19 @@ def removemembers(alist): #because the user has a penalty, no longer eligible to
     ]
     drop_window = sg.Window('Drop Members', drop_layout_final)
     event, values = drop_window.read()
-    if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Drop Members'):
-        drop_window.close()
-    elif (event == 'Drop Members'):
-        for classattendee in alist: 
-            for onemember in maindf:
-                if classattendee.username == onemember.username:
-                     maindf =  member_data.drop()
+
+    if (event == 'Drop Members'):
+        for classattendee in alist: #for every instance of a member that needs to be dropped 
+            #print (classattendee.firstname)
+            # for onemember in maindf: #
+            #     if classattendee.username == onemember.username:
+            #          maindf =  member_data.drop()
+            for person in master_list:
+                if (person.firstname == classattendee.firstname):
+                    master_list.remove(person)
+    drop_window.close()
+
+            
     return None
 
 def runclass(attendancelist): #paramater attendancelist: some kind of attendance list after a class submitted by a coach 
@@ -269,18 +266,19 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
             revenueamount += 10 
         person.balance = person.balance - 10 
         person.attendance = person.attendance + 1 
-        IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
+    IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
+    if len(droplist)>=1:
+        removemembers(droplist) #function to drop all members who have missed more than two payments 
+    exportToDataBase(master_list)
 
+    
     
         # if person.paid == False: #if the person does not pay by month...
         #     person.balance = person.balance - 10 # subtract $10 off balance to pay for class 
         # if person.discountstatus(): 
         #     person.balance = person.balance - 9 #10% off the class  
-    if len(droplist)>=1:
-        removemembers(droplist) #function to drop all members who have missed more than two payments 
-    
     return None         
-runclass(attendance)
+#runclass(attendance)
 
 
 #removemembers(['Rachita'])
@@ -382,16 +380,21 @@ def memberlogin(username): #use this function to let members schedule and pay fo
         #otherwise incremement self.balance by 10 
     return None 
 def coachlogin(): #coach to choose wheter to run a class and submit attednance, modify member list(to dop members), send text for reminders and notifications  
-    coachlayout = [[sg.Text('Do you want to submit attendance for a class?')],
-          [sg.Button('Submit Attendance'),sg.Exit()]]
+    coachlayout = [[sg.Text('Choose to submit attendance, or see lists of members')],
+          [sg.Button('Submit Attendance'),sg.Button('See Member Lists') ,sg.Exit()]]
     coach_window = sg.Window('Coach Login', coachlayout)
     event, values = coach_window.read()
     if event == "Submit Attendance":    #Moubin attendance function here 
-        master_list = importdataframe(member_data)
-        attendance_list = generateattendancelist(master_list) #when user submits attendance list 
+        #master_list = importdataframe(member_data)
+        attendance_list = toPerson(makeAttendance(),master_list) #when user submits attendance list 
+        # for i in attendance_list:
+        #     print (i.firstname)
         runclass(attendance_list) #user can drop members after submitting an attendance list for a class 
+    elif event == 'See Member Lists':
+        showListing(master_list)
     
-    futureclasses(master_list) #send text for reminders 
+    #futureclasses(master_list) #send text for reminders 
+
     return None 
 
 def treasurerlogin(): #check income statement to date, manage coach list and schedule 
@@ -403,10 +406,10 @@ def treasurerlogin(): #check income statement to date, manage coach list and sch
         if event == "Manage Coach List": 
             count = 0  #for any given month, count how many times in the month coach has run a class, pay coach based on this number
             coachattendancelayout = [[sg.Text('Confirm coach attendance')],
-            [sg.Checkbox('Jan 7', size=(12, 1), default=False),],
-            [sg.Checkbox('Jan 14', size=(12, 1), default=False),],
-            [sg.Checkbox('Jan 21', size=(12, 1), default=False),],
-            [sg.Checkbox('Jan 28', size=(12, 1), default=False),],
+            [sg.Checkbox(f'{IncomeStatement.getmonth()} 7', size=(12, 1), default=False),],
+            [sg.Checkbox(f'{IncomeStatement.getmonth()} 14', size=(12, 1), default=False),],
+            [sg.Checkbox(f'{IncomeStatement.getmonth()}  21', size=(12, 1), default=False),],
+            [sg.Checkbox(f'{IncomeStatement.getmonth()} 28', size=(12, 1), default=False),],
             [sg.Button('Submit')]]
             coachattendancewindow = sg.Window('Manage Coach List', coachattendancelayout)    
             event, values = coachattendancewindow.read()
@@ -414,8 +417,8 @@ def treasurerlogin(): #check income statement to date, manage coach list and sch
                 for i in values.values():
                     if i == True:
                         count = count + 1 
-                        IncomeStatement.updatecoachexpense(count) #add this to list of expenses for coach
-                        coachattendancewindow.close()
+                IncomeStatement.updatecoachexpense(count) #add this to list of expenses for coach
+                coachattendancewindow.close()
         elif event == "Check Financials": #if user wants to check financials, display the income state to date 
             financelayout = [[sg.Text('Choose whether to see income statement, see profits, see debts, or pay rent, or close entries for the month')],
             [sg.Button('See Income Statement'), sg.Button('See Profits'),sg.Button('See Debts'),sg.Button('Pay Rent'),sg.Button('Pay Coach'),sg.Button('Close Entries')]]
@@ -461,6 +464,7 @@ def displaymain():
             Login()
     window1.close()
     return None 
-displaymain()
+#displaymain()
     
 
+showListing(master_list)

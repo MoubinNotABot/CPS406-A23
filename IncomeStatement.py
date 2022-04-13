@@ -191,6 +191,9 @@ class IncomeStatement:
                 count = count + 1
         self.revenue['Accounts Payable'] = count * 40 
         return None 
+    def getmonth(self):
+        return months[self.currentmonth]
+
 
 
 
