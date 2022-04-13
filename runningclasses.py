@@ -33,6 +33,7 @@ def importdataframe(dataframe): #this function takes the dataframe containing me
     return master_list
 
 importdataframe(member_data)
+
 def Login(): #checks whether member username and password is correct when user logs in, based on the type of user (trasurer,member, coach) the interface will be different 
     global member_data
     member_usernames = list(member_data['Username']) 
@@ -164,10 +165,11 @@ def Register(): #allows users to register a coach, member or treasurer
         password  = values8[0]
         break 
     temp =  Member(type.lower(), firstname,lastname,phone,address,username,password,False,0,0,0,0,0)
-    temp_df = pd.DataFrame({'Type': type.lower(),'First Name':[firstname], 'Last Name': [lastname], 'Phone': [phone], 'Address': [address], 'Username': [username], 'Password':[password], 
-    'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance],'discount_count':[temp.discountCount]  }) #create a temp_df for the new member that has been created 
-    member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this row from the data frame to the master data frame being used to track all members 
-    member_data.to_csv('allmembers.csv')
+    #temp_df = pd.DataFrame({'Type': type.lower(),'First Name':[firstname], 'Last Name': [lastname], 'Phone': [phone], 'Address': [address], 'Username': [username], 'Password':[password], 
+    #'self_paid':[temp.paid],'self_attendance': [temp.attendance], 'self_weekspaid':[temp.weekspaid], 'self_penalty':[temp.penalty],'self_balance':[temp.balance],'discount_count':[temp.discountCount]  }) #create a temp_df for the new member that has been created 
+    # member_data = member_data.append(temp_df) #temp_df is a dataframe with one row, append this row from the data frame to the master data frame being used to track all members 
+    # member_data.to_csv('allmembers.csv')
+    master_list.append(temp)
     return None  
 def scheduleUI(): #function for the schedule GUI
     layout=[[sg.Text('Schedule an appointment',size=(20, 1),justification='left')],
@@ -212,8 +214,10 @@ def notifymembersofpenalty(penaltylist):
     ]
     notify_window = sg.Window('Skipped Payments', notify_layout_final)
     event, values = notify_window.read()
-    if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Send Text'):
+    if (event == sg.WIN_CLOSED) or (event == 'Exit'): 
         notify_window.close()
+    elif (event == 'Send Text'):
+        sg.Popup('You have successfully sent the message')
     return None
 
 attendance = generateattendancelist(master_list)
@@ -262,11 +266,8 @@ def runclass(attendancelist): #paramater attendancelist: some kind of attendance
                 notifymembersofpenalty(notifylist) #  function to notify members in the penalty list 
             elif person.penalty >=2:
                 droplist.append(person) #function to drop members who have skipped payment more than once 
-        elif (person.balance < 10) and (person.paid == False):
-            revenueamount += 10 
         person.balance = person.balance - 10 
         person.attendance = person.attendance + 1 
-    IncomeStatement.addtorevenue(revenueamount) #revenue from classes is updated in the Income Statement 
     if len(droplist)>=1:
         removemembers(droplist) #function to drop all members who have missed more than two payments 
     exportToDataBase(master_list)
@@ -321,15 +322,19 @@ def futureclasses(attendance_list):   #notify all members about changes or detai
     ]
     notify_window = sg.Window('Future and/or Changes to Practises', notify_layout_final)
     event, values = notify_window.read()
-    if (event == sg.WIN_CLOSED) or (event == 'Exit') or (event == 'Send Message'):
+    if (event == sg.WIN_CLOSED) or (event == 'Exit'):
         notify_window.close()
+    elif (event == 'Send Message'):
+        sg.Popup('You have successfully sent the message')
+
+        
     return None
 #futureclasses(['Rachita'])
     
     
 def memberlogin(username): #use this function to let members schedule and pay for a class 
     layout_member = [[sg.Text('Choose whether to sign up for a class or make a payment')],
-          [sg.Button('Schedule Class'), sg.Button('Make Payment'),sg.Button('Exit')]]
+          [sg.Button('Schedule Class'),sg.Button('Exit')]]
     member_window = sg.Window('Welcome', layout_member) 
     while True:
         event,values=member_window.read()
@@ -337,7 +342,7 @@ def memberlogin(username): #use this function to let members schedule and pay fo
             break
         if event == 'Schedule Class':
             layout=[[sg.Text('Schedule an appointment',size=(20, 1),justification='left')],
-                    [sg.Combo(['April 7th','April 14th','April 21st', 'April 28th',],default_value='April 7th',key='board')],
+                    [sg.Combo([f'{IncomeStatement.getmonth()} 7th',f'{IncomeStatement.getmonth()} 14th',f'{IncomeStatement.getmonth()} 21st', f'{IncomeStatement.getmonth()} 28th'],default_value=f'{IncomeStatement.getmonth()} 7th',key='board')],
                     [sg.Button('Proceed with payment',),sg.Button('CANCEL',)]]
             win =sg.Window('Schedule',layout)
 
@@ -346,7 +351,18 @@ def memberlogin(username): #use this function to let members schedule and pay fo
                 if event == 'CANCEL' or event == sg.WIN_CLOSED:
                     break
                 if event == 'Proceed with payment':
-                    layout = [[sg.Text('Each class costs 10 dollars and monthly payments cost 40 dollars')],
+                    #check discount statuses for member that has logged in 
+                    for i in master_list:
+                        if i.username == username:
+                            discount_weekspaid = i.discountstatus()
+                            discount_attendance = hasAttendanceDiscount(i)  
+                            if (discount_weekspaid == True) and (discount_attendance== True):
+                                string = "Thanks for paying on time and being a top ten attender! Your next class will be $2 off. Only pay $8." 
+                            elif (discount_weekspaid == True) or (discount_attendance== True):
+                                string = "You are eligible for a discount! Your next class will be $1 off. Only pay $9." 
+                            else: 
+                                string = 'Each class costs 10 dollars and monthly payments cost 40 dollars'
+                    layout = [[sg.Text(string,background_color="DarkGreen")],
                               [sg.Text('Enter Credit Card Number')],
                               [sg.Input('', enable_events=True,  key='-INPUT-')],
                               [sg.Text('Enter Secuirity Code')],
@@ -365,22 +381,22 @@ def memberlogin(username): #use this function to let members schedule and pay fo
                             for i in master_list:
                                 if (i.username==username):
                                     i.paid=True
-                            member_data.loc[member_data['Username']==username, ['self_paid']]=True
-                            print (member_data)
+                                    i.weekspaid += 4 
+                                    IncomeStatement.revenue['Accounts Payable'] += 40 
                         elif event1 == 'Pay per class':
                             sg.Popup('You have successfully paid for the class')
                             for i in master_list:
                                 if(i.username==username):
-                                    i.balance+=10
-
+                                    i.balance+=10 
+                                    i.weekspaid += 1 
+                                    IncomeStatement.revenue['Classes'] += 10 
                     window.close()
                 win.close()
             member_window.close()
-        #need functionality: if person has paid payments for the month, self.paid = True 
-        #otherwise incremement self.balance by 10 
+    exportToDataBase(master_list)    
     return None 
 def coachlogin(): #coach to choose wheter to run a class and submit attednance, modify member list(to dop members), send text for reminders and notifications  
-    coachlayout = [[sg.Text('Choose to submit attendance, or see lists of members')],
+    coachlayout = [[sg.Text('Choose to submit attendance, see lists of members')],
           [sg.Button('Submit Attendance'),sg.Button('See Member Lists') ,sg.Exit()]]
     coach_window = sg.Window('Coach Login', coachlayout)
     event, values = coach_window.read()
@@ -464,7 +480,9 @@ def displaymain():
             Login()
     window1.close()
     return None 
-#displaymain()
+
+displaymain()
+exportToDataBase(master_list)
     
 
-showListing(master_list)
+#showListing(master_list)

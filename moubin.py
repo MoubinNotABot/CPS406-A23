@@ -60,14 +60,16 @@ def showListing(membersArr): # given an array, make a window out of it.
         sg.Text("                                                                                                                "), # space between button and border
         sg.Button("Sort by attendance"),
         sg.Text("            "), # space between buttons
-        sg.Button("Sort by payment")],
+        sg.Button("Sort by payment"),
+        sg.Text("            "), # space between buttons
+        sg.Button("Notify members")],
         [
-        sg.Text("Number               ", font="TkFixedFont 15 bold"), 
-        sg.Text("Name                    ", font="TkFixedFont 15 bold"), 
-        sg.Text("Classes attended", font="TkFixedFont 15 bold"), 
-        sg.Text("Payments made  ", font="TkFixedFont 15 bold"),
-        sg.Text("Phone number      ", font="TkFixedFont 15 bold"), 
-        sg.Text("Address          ", font="TkFixedFont 15 bold"),
+        sg.Text("Number                                ", font ="TkFixedFont 15 bold"), 
+        sg.Text("Name                                   ", font="TkFixedFont 15 bold"), 
+        sg.Text("Classes attended              ", font="TkFixedFont 15 bold"), 
+        sg.Text("Payments made                ", font="TkFixedFont 15 bold"),
+        sg.Text("Phone number                  ", font="TkFixedFont 15 bold"), 
+        sg.Text("Address                               ", font="TkFixedFont 15 bold"),
         ]
         ]
 
@@ -106,6 +108,30 @@ def showListing(membersArr): # given an array, make a window out of it.
         if event == "Sort by payment":
             showListing(sortByPaidStreak(newArr))
             break # closing one window, will close all the windows. 
+
+        if event == "Notify members":
+            notifylist = []
+            for i in newArr:
+                notifylist.append(i.firstname)
+            notify_layout = [[sg.Listbox(
+            values=notifylist, enable_events=True, size=(40, 20),
+            )]]
+            notify_layout2 = [[sg.Text("Enter a message to notify members with details about future classes or if any changes are made to practices. \n")],
+                      [sg.Input()], [sg.Button('Send Message')]]
+            notify_layout_final = [
+            [
+            sg.Column(notify_layout),
+            sg.VSeperator(),
+            sg.Column(notify_layout2),
+            ]
+            ]
+            notify_window = sg.Window('Future and/or Changes to Practises', notify_layout_final)
+            event, values = notify_window.read()
+            if (event == sg.WIN_CLOSED) or (event == 'Exit'):
+                notify_window.close()
+            if (event == 'Send Message'):
+                sg.Popup('You have successfully sent the message')
+
 
     listingWindow.close() # close the window
 
@@ -189,13 +215,13 @@ def toPerson(arr,list): # takes in an array of usernames made by the admin
 def printer(members): # 
     for i in range(len(members)):
         print(members[i].username)
-printer(members)
+#printer(members)
 
 def test(membersArr):
     print("in test")
     print("out test")
 
-print("##################################")
+#print("##################################")
 # attendance = toPerson(makeAttendance())
 # printer(attendance)
 # for i in attendance:

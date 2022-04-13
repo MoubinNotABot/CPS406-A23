@@ -1,3 +1,4 @@
 ,Type,First Name,Last Name,Phone,Address,Username,Password,self_paid,self_attendance,self_weekspaid,self_penalty,self_balance,discount_count
 0,coach,john ,doe,111 222 3333,ABC Street,jdoe,a,False,0,0,0,0,0
-0,member,Rachita,Singh,111 222 3333,ABC Street,rsingh,a,False,0,0,0,0,0
+0,member,Rachita,Singh,111 222 3333,ABC Street,rsingh,a,False,1,1,1,0,0
+0,member,James,Albert,111 222 3333,ABC Street,jalbert,a,True,2,2,0,10,0
